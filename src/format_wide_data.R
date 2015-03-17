@@ -20,7 +20,6 @@ format_wide_data <- function(original_data){
     }else{    warning("separator not found")
     }
     
-    print(separator)
     #format hood names
     meta_key <- original_data[(key_row+1):(time_row-1)]
     meta_key <- lapply(meta_key, FUN=function(r){              #keep metadata together

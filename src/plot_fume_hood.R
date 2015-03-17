@@ -2,6 +2,10 @@ library(ggplot2)
 library(scales)
 
 plot_fume_hood <- function(hood_sash_data, run_length, full_summary){
+    #check names in dataframe
+    names_to_check <- c("dttm", "sash", "hood")
+    if(!all(names_to_check %in% names(hood_sash_data))) stop("missing data in dataframe hood_sash_data")
+    
     hood_sash_data$exceeds_5 <- NA
     hood_sash_data$exceeds_8 <- NA
     hood_sash_data$exceeds_24 <- NA
@@ -32,12 +36,12 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary){
     hood_sash_data$color[hood_sash_data$sash=="closed"] <- "black"
     
     title_text <- paste(full_summary$hood,"\n File:",data_files[full_summary$file], 
-                        "\n Interval:", full_summary$interval,
-                        "min \n Total openings:", full_summary$total_openings, ". Max open duration (hrs): ",full_summary$max_opening_hrs,
+                        "\n Interval:", full_summary$interval, "min . Proportion of open intervals:", full_summary$pct_open,
+                        "\n Total openings:", full_summary$total_openings, ". Max open duration (hrs): ",full_summary$max_opening_hrs,
                         "\n Number openings over 5 hrs:", full_summary$openings_over_5)
     trend <- ggplot(hood_sash_data)+
-        geom_line(aes(x=dttm, y=h_data)) + 
-        geom_point(aes(x=dttm, y=h_data), color=hood_sash_data$color) + 
+        geom_line(aes(x=dttm, y=hood)) + 
+        geom_point(aes(x=dttm, y=hood), color=hood_sash_data$color) + 
         geom_point(aes(x=as.POSIXct(exceeds_5, origin="1970-01-01"), y=-0.1), color="yellow", lty="-")+
         geom_point(aes(x=as.POSIXct(exceeds_8, origin="1970-01-01"), y=-0.1), color="orange", lty="-")+
         geom_point(aes(x=as.POSIXct(exceeds_24, origin="1970-01-01"), y=-0.1), color="red", lty="-")+
