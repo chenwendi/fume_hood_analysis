@@ -1,10 +1,10 @@
 library(reshape2)
 library(dplyr)
 
-format_wide_data <- function(original_data){
-    key_row   <- c(which(grepl("^Key",original_data)))    
-    time_row  <- c(which(grepl("^Time",original_data)))    
-    date_row  <- c(which(grepl("^<>Date",original_data)))   
+format_wide_data <- function(original_data, file_format){
+    key_row   <- file_format$p1
+    time_row  <- file_format$p2
+    date_row  <- file_format$p3
     
     #find the separator between fields
     tab_separated   <- length(strsplit(original_data[date_row], "\t")[[1]])
@@ -17,7 +17,7 @@ format_wide_data <- function(original_data){
     if(tab_separated>num_hoods){                      separator <- "\t"       #\t has first priority
     }else if(comma_separated>num_hoods){              separator <- ","     
     }else if(space_separated>num_hoods){              separator <- "([[:space:]]){2,}"
-    }else{    warning("separator not found")
+    }else{    stop("separator not found")
     }
     
     #format hood names
@@ -26,7 +26,7 @@ format_wide_data <- function(original_data){
         if(separator!=",")  r <- gsub(separator,",",r)   #replace separators with commas 
         new_line <- strsplit(r,",")
         key <- gsub(":","", (new_line[[1]][1]))
-        data.frame(key=key, hood=new_line[[1]][2], other=toString(new_line[[1]][3: length(new_line[[1]])]))
+        data.frame(key=tolower(key), hood=new_line[[1]][2], other=toString(new_line[[1]][3: length(new_line[[1]])]))
     })
     meta_key <- dplyr::rbind_all(meta_key)
     
@@ -56,11 +56,12 @@ format_wide_data <- function(original_data){
     
     }else if(ncol(data)==length(name_row)){
         #date/time columns are separate
-        if(!all(c("<>Date", "Time") %in% name_row[1:2])) warning("check date/time columns in data")
+        date_time_check <- grepl("DATE|Date",name_row[1]) & grepl("Time|TIME",name_row[2])
+        if(!all(date_time_check)) warning("check date/time columns in data")
         names(data) <- name_row
-        data$dttm <- paste(data$"<>Date", data$"Time")
-        data$"<>Date" <- NULL
-        data$"Time" <- NULL
+        data$dttm <- paste(data[,1], data[,2])
+        data[,1] <- NULL
+        data[,1] <- NULL
         
     }else{
         warning("number of data columns does not match column names")
@@ -78,8 +79,8 @@ format_wide_data <- function(original_data){
                          apply(data[,2:ncol(data)],2,FUN=as.numeric))      #correct numberformatting 
     
     #name columns with hood names
-    data_cols <- data.frame(key=names(data))
-    data_cols <- dplyr::left_join(data_cols,meta_key, by="key")
+    data_cols <- data.frame(key=tolower(names(data)))       #some files have inconsistent capitalization between key and data
+    data_cols <- dplyr::left_join(data_cols, meta_key, by="key")
     data_cols$hood
     names(data)[!is.na(data_cols$hood)] <- data_cols$hood[!is.na(data_cols$hood)]
     

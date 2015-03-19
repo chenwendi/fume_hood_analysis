@@ -35,7 +35,7 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary){
     hood_sash_data$color[hood_sash_data$sash=="open"]   <- "grey"
     hood_sash_data$color[hood_sash_data$sash=="closed"] <- "black"
     
-    title_text <- paste(full_summary$hood,"\n File:",data_files[full_summary$file], 
+    title_text <- paste(full_summary$hood,"\n File:",full_summary$file, 
                         "\n Interval:", full_summary$interval, "min . Proportion of open intervals:", full_summary$pct_open,
                         "\n Total openings:", full_summary$total_openings, ". Max open duration (hrs): ",full_summary$max_opening_hrs,
                         "\n Number openings over 5 hrs:", full_summary$openings_over_5)

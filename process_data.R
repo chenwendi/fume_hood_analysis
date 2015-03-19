@@ -18,19 +18,22 @@ wd_output <- "../output/"
 # read and format all data
 all_formatted_data <- list()
 for(file in 1:length(data_files)){
-    print(data_files[file])
+    tryCatch({
     original_data <- readLines(paste0(wd_data, data_files[file])) #read lines from csv file
+    original_data <- gsub("\"","",original_data)                  #get rid of random quotation marks
     
     ## determine file formatting
     file_format <- check_format(original_data)    #check formatting of file
     
     ## choose formatting function based on current file formatting
-    if(file_format=="wide_date format"){          formatted_data <- format_wide_data(original_data)
-    }else if(file_format=="long_date format"){    formatted_data <- format_long_data(original_data)
+    if(file_format$type=="wide_date format"){          formatted_data <- format_wide_data(original_data, file_format)
+    }else if(file_format$type=="long_date format"){    formatted_data <- format_long_data(original_data, file_format)
     }else{                                        warning(paste(data_files[file],": data not in recognizable format"))
     }    
        
     all_formatted_data[[file]]<- formatted_data
+    },error=function(e){ print(paste(file, data_files[file], e))
+    })
 }
 
 ##### remove data for hoods that are not relevant
@@ -40,15 +43,21 @@ all_hood_names <- sapply(1:length(all_formatted_data), FUN=function(c){
 })
 all_hood_names <- unlist(all_hood_names)
 
-#names of hoods to exclude
+#names of hoods to exclude because they're not relevant or they represent aggregated hoods
 hood_endings_to_exclude <- c("TOTAL MAX$", "TOTAL MIN$", 
-                             "TOTAL.HOOD.FLOW$", "TOT.HOOD.FLOW$", "TOT.HOODS.OPEN$", "FLOW STPT$",
-                             "EXHAUST", "^Var")
+                             "TOTAL.HOOD.FLOW$", "TOT.HOOD.FLOW$", "TOT.HOODS.OPEN$", #"TOT.FLOW$" ,
+                             "FLOW STPT$",
+                             "EXHAUST", "^Var",
+                             
+                             # labs with multiple hoods
+                             "CHEM.BALSKUS","CHEM.BETLEY","CHEM.COREY","CHEM.GORDON", "CHEM.JACOBSEN", "CHEM.KAHN","CHEM.KISHI",
+                             "CHEM.LIU", "CHEM.MYERS","CHEM.NOCERA", "CHEM.PARK","CHEM.RITTER", "CHEM.SHAIR","CHEM.WHITESIDES" , "CHEM.XIE",
+                             "MCKAY.WEITZ" , "NW.TEACHLABS"                        
+)
 hoods_to_exclude <- sapply(1:length(hood_endings_to_exclude), FUN=function(c){
     return(all_hood_names[grepl(hood_endings_to_exclude[c], all_hood_names)])
 })
 hoods_to_exclude <- unlist(hoods_to_exclude)
-
 
 # begin pdf creation for all graphs
 pdf(paste0(wd_output,"sash_data.pdf"), width=12, height=4)
@@ -65,7 +74,7 @@ all_data_summary <- lapply(1:length(all_formatted_data), FUN=function(c){
     intervals <- data_c$dttm[1:10]- lag(data_c$dttm[1:10],1)
     interval <- median(intervals, na.rm=T)
     
-    file_summary <- data.frame(file=c, min_date, max_date, days=round(range,2), interval)
+    file_summary <- data.frame(file=data_files[c], min_date, max_date, days=round(range,2), interval)
     
     #### summary of individual fume hoods
     fume_hood_names <- setdiff(names(data_c),"dttm")
@@ -145,17 +154,21 @@ write.csv(all_data_summary, file=paste0(wd_output,"all_hood_summary.csv"), row.n
 graphics.off()
 closeAllConnections()
 
+# plot data availability
+plot_data_availability(all_data_summary)
+
+#compare 2 files with ovelapping data for consistency (and combine?)
+check_overlapping_hood_data(all_data_summary)
+
 # need to set up grouping variables
-grouping <- data.frame(filename =data_files)
-grouping$file <- as.numeric(rownames(grouping))
-building <- sapply(grouping$filename, FUN=function(f){
+grouping <- data.frame(file =data_files)
+building <- sapply(grouping$file, FUN=function(f){
     if(grepl("esl",tolower(f))) return("ESL")
-    if(grepl("shair",tolower(f))) return("CCB")
-    if(grepl("sherman",tolower(f))) return("SF")
+    if(grepl("ccb",tolower(f))) return("CCB")
+    if(grepl("sherman|sf",tolower(f))) return("SF")
+    if(grepl("bio",tolower(f))) return("BIO")
 })
 grouping$building <- unname(building)
-grouping$filename<-NULL
-
 all_data_summary <- dplyr::inner_join(all_data_summary,grouping)
 
 # is there any correlation between hoods within a group (here calculated as data provided in same file)
@@ -175,6 +188,7 @@ correlations_hoods <- lapply(1:length(all_formatted_data), FUN=function(c){
     cor_list <- dplyr::rbind_all(cor_list)
 })
 correlations_hoods <- dplyr::rbind_all(correlations_hoods)
+correlations_hoods$correlation <- correlations_hoods$correlation[!is.na(correlations_hoods$correlation)]
 t.test(correlations_hoods$correlation)    
 #mean is not equal to zero => there is correlation between hoods in the same lab
     
@@ -208,27 +222,26 @@ sum(week_differences$sig)/length(week_differences$sig)
 table(week_differences$w1, week_differences$sig)    #what are the weekly differences across labs/buildings
 table(week_differences$file, week_differences$sig)  #are there weekly differences by labs/buildings
 
-
+#####comparison of data
+files_to_compare <- c("BIO_2.csv", "CCB_1.csv", "CCB_shair2.csv", "ESL_1.csv", "ESL_2.csv", "ESL_3.csv", "SF_1.csv")
+relevant_data <- all_data_summary[all_data_summary$file %in% files_to_compare,]
 # comparisons of fume hoods in different groups (labs, rooms, etc...)
-plot_setup <- ggplot(all_data_summary) + theme_minimal()
+plot_setup <- ggplot(relevant_data) + theme_minimal()
 plot_setup + geom_bar(aes(y=..count.., x=building)) + ggtitle("Hood distribution across buildings")   
 
 plot_setup + geom_boxplot(aes(x=building, y= total_openings)) + geom_point(aes(x=building, y= openings_over_5), position="jitter", color="red") + 
-    ggtitle("Boxplot of total openings, \ncompared to openings over 5 hours")
+    ggtitle("Boxplot of total openings, \ncompared to openings over 5 hours") + coord_cartesian(ylim=c(0, unname(quantile(relevant_data$total_openings,0.99)))) 
 plot_setup + geom_point(aes(x=pct_open, y= total_openings, color=building)) + ggtitle("Total openings vs Percent of time open")
 
-plot_setup + geom_density(aes(x=pct_open, fill=building), alpha=0.2)   + ggtitle("Percent of time open, by building")
-plot_setup + geom_density(aes(x=pct_open_we, fill=building), alpha=0.2) 
+plot_setup + geom_density(aes(x=pct_open, fill=building), alpha=0.1)   + ggtitle("Percent of time open, by building")
+plot_setup + geom_density(aes(x=pct_open_we, fill=building), alpha=0.1) + ggtitle("Percent of time open on weekends, by building")
 
-ggplot(all_data_summary[all_data_summary$ratio_mean_min_flow>0,]) + theme_minimal() + geom_density(aes(x=ratio_mean_min_flow)) + 
+ggplot(relevant_data[relevant_data$ratio_mean_min_flow>0,]) + theme_minimal() + geom_density(aes(x=ratio_mean_min_flow)) + 
     ggtitle("Ratio of mean flow to minimum flow (for sites with data available)")
 
 #two sample t-test for equal means
-variable <- "pct_open"
-experimental <- all_data_summary[all_data_summary$building=="CCB",variable]
-control <- all_data_summary[!all_data_summary$building=="CCB",variable]
-t_results <- t.test(experimental, control, alternative="two.sided") 
-
-
-# how to deal with multiple datafiles that contain different periods for a given hood?
+variable     <- "pct_open"
+experimental <- relevant_data[relevant_data$building=="CCB",variable]
+control      <- relevant_data[!relevant_data$building=="CCB",variable]
+t_results    <- t.test(experimental, control, alternative="two.sided") 
 

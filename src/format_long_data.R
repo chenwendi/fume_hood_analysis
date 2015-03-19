@@ -1,4 +1,4 @@
-format_long_data <- function(original_data){
+format_long_data <- function(original_data, file_format){
 
     original_data <- gsub("\"", "",original_data)                                      #remove unnecessary quotes within lines
     start_chunks <- c(which(grepl("Point",original_data)),(length(original_data)+1))   #get line at which chunk starts
