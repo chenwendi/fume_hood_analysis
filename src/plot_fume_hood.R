@@ -2,6 +2,10 @@ library(ggplot2)
 library(scales)
 
 plot_fume_hood <- function(hood_sash_data, run_length, full_summary){
+    if(!"data.frame" %in% class(hood_sash_data)) stop("hood_sash_data must be data.frame")
+    if(!"data.frame" %in% class(run_length))     stop("run_length must be data.frame")
+    if(!"data.frame" %in% class(full_summary))   stop("full_summary must be data.frame")
+    
     #check names in dataframe
     names_to_check <- c("dttm", "sash", "hood")
     if(!all(names_to_check %in% names(hood_sash_data))) stop("missing data in dataframe hood_sash_data")
@@ -35,10 +39,11 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary){
     hood_sash_data$color[hood_sash_data$sash=="open"]   <- "grey"
     hood_sash_data$color[hood_sash_data$sash=="closed"] <- "black"
     
-    title_text <- paste(full_summary$hood,"\n File:",full_summary$file, 
-                        "\n Interval:", full_summary$interval, "min . Proportion of open intervals:", full_summary$pct_open,
-                        "\n Total openings:", full_summary$total_openings, ". Max open duration (hrs): ",full_summary$max_opening_hrs,
-                        "\n Number openings over 5 hrs:", full_summary$openings_over_5)
+    title_text <- paste(full_summary$hood,
+                        "\n File:",full_summary$file, 
+                        "\n Interval:", full_summary$interval, "min . Number of intervals:", full_summary$total_intervals,". Proportion of open intervals:", full_summary$pct_open,
+                        "\n Number of continuous open periods:", full_summary$total_openings, ". Max open duration (hrs): ",full_summary$max_opening_hrs,
+                        "\n Number openings over 5 hrs:", full_summary$openings_over_5, ". Proportion of time over 5 hrs:",  full_summary$pct_open_over_5)
     trend <- ggplot(hood_sash_data)+
         geom_line(aes(x=dttm, y=hood)) + 
         geom_point(aes(x=dttm, y=hood), color=hood_sash_data$color) + 
