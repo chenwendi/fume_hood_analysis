@@ -46,7 +46,7 @@ format_wide_data <- function(original_data, file_format){
         new_line <- strsplit(r,",")
         data.frame(t(new_line[[1]]))
     })
-    name_row <- data[[1]]
+    name_row <- as.vector(t(data[[1]]))
     data <- dplyr::rbind_all(data[2:length(data)])
     
     #format datetime data
@@ -68,12 +68,18 @@ format_wide_data <- function(original_data, file_format){
     }
     
     data$dttm <- as.POSIXct(data$dttm, format="%m/%d/%Y %H:%M")    #date formatting
-
+    
+    if(as.numeric(format(data$dttm[1],"%Y"))<2000){   #date formatted to wrong millenia
+        data$dttm <- paste0(as.numeric(substr(as.character(data$dttm),1,4)) +2000, substr(as.character(data$dttm),5,19))
+        data$dttm <- as.POSIXct(data$dttm, format="%Y-%m-%d %H:%M")    #date formatting
+    }
+    
     #relabel sash positions and format numbers
-    data_long <- melt(data, id.vars = "dttm")    
+    data_long <- melt(data, id.vars = "dttm") 
     data_long$value[data_long$value=="CLOSED"]    <- 0                                                #number formatting
     data_long$value[data_long$value=="OPEN"]      <- 1                                               #number formatting
     data_long$value[data_long$value=="No Data"]   <- NA                                              #number formatting
+    data_long$value[grepl("[a-zA-Z]",data_long$value)]   <- NA                                              #number formatting
     data   <- dcast(data_long, dttm~ variable)  
     data   <- data.frame(dttm=data[,1],
                          apply(data[,2:ncol(data)],2,FUN=as.numeric))      #correct numberformatting 

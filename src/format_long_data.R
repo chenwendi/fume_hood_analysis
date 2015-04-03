@@ -45,6 +45,8 @@ format_long_data <- function(original_data, file_format){
         }  
     }
     
+    formatted_data <- formatted_data[order(formatted_data$dttm),]
+    
     #remove all columns that end with STPT?
     return(formatted_data)
 }
