@@ -1,9 +1,25 @@
-This project does the following:
+The goal of this project is to analyze data from fume hoods in different buildings and departments on campus and characterize fume hood sash closure.
 
-- reads csv files from a data folder
-- converts data to a common format
-- calculates metrics for each fume hood
-- plots data for fume hoods
+###Getting Started
+
+Using this code to analyse and visualize fume hood data from csv files will require you to perform the following steps:
+
+1. Install R. RStudio is not required, but is highly recommended.
+
+2. Install several R packages, including:
+
+* plyr
+* dplyr
+* ggplot2
+* reshape2
+
+3. Setup file stucture to match the directory structure described below. It will need to contain:
+
+- this_fume_hood_analysis repository containing all .CSV and .R files
+- a data folder into which you'll put csv files
+- an output folder into which all PDF figures and csv output will be saved
+
+4. Open up and run the R script 'process_data.R' in either RStudio (recommended) or R. This script is the master script to perform the main fume hood data analysis. 
 
 ###Directory structure
 
@@ -11,6 +27,7 @@ This project does the following:
 +-- Project_folder
 |  +-- fume_hood_analysis   (directory with cloned github repository)
 |  |  +-- README.md         
+|  |  +-- hood_mapping.csv  (csv file with names of all fume hoods and their buildings/depts)
 |  |  +-- process_data.R    (script to process data)
 |  |  +-- src               (directory contains data processing, analysis functions)
 |  +-- data                 (directory contains csv files with raw fume hood data)

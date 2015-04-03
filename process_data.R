@@ -11,6 +11,7 @@ sapply(list.files("./src/",pattern="*.R$", full.names=TRUE,ignore.case=TRUE),sou
 # get filenames
 wd_data    <- "../data/"                                           #csv data is saved in this folder
 data_files <- list.files(wd_data,pattern = ".csv")
+if(length(data_files)==0) stop("There are not fume hood data files to analyze.")
 
 # set directory where all output will be saved
 wd_output <- "../output/"
