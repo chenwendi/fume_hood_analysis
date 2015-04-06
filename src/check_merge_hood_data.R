@@ -107,7 +107,7 @@ combine_2_files <- function(f_a, f_b){
                 num_comparisons <- nrow(conflicting_data)/2
                 rows_to_remove <- c()
                 for(pair in 1:num_comparisons){
-                    if(TRUE %in% is.na(unique(unlist(diff)))){      #na values not the same, remove the row with more NA values
+                    if(TRUE %in% is.na(unique(unlist(conflicting_data[(2*pair-1):(2*pair),])))){      #na values not the same, remove the row with more NA values
                         if(sum(is.na(conflicting_data[(2*pair-1),]))<sum(is.na(conflicting_data[(2*pair),]))){ 
                             rows_to_remove <- c(rows_to_remove, rownames(conflicting_data[(2*pair),]))
                         }else{rows_to_remove <- c(rows_to_remove, rownames(conflicting_data[(2*pair-1),]))} 

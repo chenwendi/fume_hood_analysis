@@ -4,7 +4,8 @@ calculate_file_metrics <- function(all_formatted_data, data_files){
         print(c)
         ##### basic calculations, summary of the data included in a given file
         data_c <- all_formatted_data[[c]]
-
+        if(nrow(data_c)==0) return(NULL)
+        
         fume_hood_names <- setdiff(names(data_c),"dttm") #get names of fume hoods
         
         file_summary           <- data.frame(hood=fume_hood_names)
