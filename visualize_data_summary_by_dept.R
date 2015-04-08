@@ -35,10 +35,10 @@ plot_a2 <- plot_setup + geom_bar(aes(y=..count.., x=dept)) +
     ggtitle("Hood distribution across building") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 suppressWarnings(print(plot_a2))
 
-plot_lab_distribution(plot_setup, var="pct_na", data_summary_temp)    
-plot_lab_distribution(plot_setup, var="pct_open_under_5", data_summary_temp)
-plot_lab_distribution(plot_setup, var="pct_open_over_5", data_summary_temp)
-plot_lab_distribution(plot_setup, var="pct_exceeding_5", data_summary_temp)
+# plot_lab_distribution(plot_setup, var="pct_na", data_summary_temp)    
+# plot_lab_distribution(plot_setup, var="pct_open_under_5", data_summary_temp)
+# plot_lab_distribution(plot_setup, var="pct_open_over_5", data_summary_temp)
+# plot_lab_distribution(plot_setup, var="pct_exceeding_5", data_summary_temp)
 
 # visualize metrics by department
 plot_setup <- ggplot(data_summary_temp, aes(x=dept, fill=dept)) + theme_minimal()

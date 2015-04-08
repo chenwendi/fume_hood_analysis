@@ -59,7 +59,7 @@ format_wide_data <- function(original_data, file_format){
         date_time_check <- grepl("DATE|Date",name_row[1]) & grepl("Time|TIME",name_row[2])
         if(!all(date_time_check)) warning("check date/time columns in data")
         names(data) <- name_row
-        data$dttm <- paste(data[,1], data[,2])
+        data$dttm <- apply( data[ ,c(1,2)] , 1 , paste , collapse = " " )        
         data[,1] <- NULL
         data[,1] <- NULL
         

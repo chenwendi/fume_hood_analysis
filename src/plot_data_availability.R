@@ -8,14 +8,9 @@ plot_data_availability <- function(all_data_summary){
     all_data_summary <- all_data_summary[,c("file", "min_date", "max_date", "dept")]   #reorder columns
     
     file_summary <- unique(all_data_summary[,c(1,2,3,4)])
-    #this is probably no longer necessary (2-Apr-2015)
-    #     wrong_year <-which(format(file_summary$min_date,"%Y")<2000)
-    #     for(y in wrong_year){
-    #         file_summary$min_date[y] <- paste0(as.numeric(substr(as.character(file_summary$min_date[y]),1,4)) +2000, substr(file_summary$min_date,5,19))
-    #         file_summary$max_date[y] <- paste0(as.numeric(substr(as.character(file_summary$max_date[y]),1,4)) +2000, substr(file_summary$max_date,5,19))
-    #     }
+    
     plot_a <- ggplot(file_summary) + geom_segment(aes(y = file,yend = file, x = min_date, xend =max_date, color=dept,fill=dept), size=3)  +
-        theme_minimal() + ggtitle("Data Availability by file") +
-        scale_x_datetime(breaks = date_breaks("7 day"), labels=date_format("%y-%b-%d"))
+      theme_minimal() + ggtitle("Data Availability Over Time") +
+      scale_x_datetime(breaks = date_breaks("7 day"), labels=date_format("%b-%d")) + xlab("Week") 
     suppressWarnings(print(plot_a))
 }

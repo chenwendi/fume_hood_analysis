@@ -9,7 +9,6 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary, file=""){
     if(!"data.frame" %in% class(hood_sash_data)) stop("hood_sash_data must be data.frame")
     if(!"data.frame" %in% class(run_length))     stop("run_length must be data.frame")
     if(!"data.frame" %in% class(full_summary))   stop("full_summary must be data.frame")
-    if(!"data.frame" %in% class(file_summary))   stop("file_summary must be data.frame")    
     
     #check names in dataframe
     names_to_check <- c("dttm", "sash", "hood")
@@ -45,6 +44,8 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary, file=""){
     hood_sash_data$color[hood_sash_data$sash=="open"]   <- "grey"
     hood_sash_data$color[hood_sash_data$sash=="closed"] <- "black"
     
+    if(full_summary$max_v>1){    ylabel <- "CFM"
+    }else{                       ylabel <- "Sash State"}
     title_text <- paste(full_summary$hood)
     if(file!="")     title_text <- paste(title_text, "\n File:",file)
     title_text <- paste(title_text, "\n Interval:", full_summary$interval, "min . Number of intervals:", full_summary$total_intervals,". Proportion of open intervals:", full_summary$pct_open,
@@ -56,9 +57,8 @@ plot_fume_hood <- function(hood_sash_data, run_length, full_summary, file=""){
         geom_point(aes(x=as.POSIXct(exceeds_5, origin="1970-01-01"), y=-0.1), color="yellow", lty="-")+
         geom_point(aes(x=as.POSIXct(exceeds_8, origin="1970-01-01"), y=-0.1), color="orange", lty="-")+
         geom_point(aes(x=as.POSIXct(exceeds_24, origin="1970-01-01"), y=-0.1), color="red", lty="-")+
-        theme_minimal() + ylab("cfm")+
+        theme_minimal() +  xlab("Date/time") + ylab(ylabel) +
         ggtitle(title_text) + 
-        scale_x_datetime(breaks = date_breaks("1 day"), labels=date_format("%y-%b-%d")) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        scale_x_datetime(breaks = date_breaks("1 day"), labels=date_format("%b-%d"))
     suppressWarnings(print(trend))
 }#function

@@ -3,6 +3,7 @@ options(stringsAsFactors = FALSE)
 library(dplyr)
 library(ggplot2)
 library(reshape2)
+library(gplots)
 
 #source all functions
 wd_src <- "./src/"
@@ -18,6 +19,8 @@ if(length(data_files)==0) stop("There are not fume hood data files to analyze.")
 
 ##### STEP 1: read and format all data
 all_formatted_data <- etl(data_files)
+saveRDS(all_formatted_data, file = paste0(wd_data,"all_formatted_data.rds"))
+saveRDS(data_files, file = paste0(wd_data,"data_files.rds"))
 
 ##### STEP 2: Summarize all files, list hoods within them, compress datasets
 compressed_data               <- compress_data(data_files, all_formatted_data, hood_mapping, wd_output)
@@ -27,62 +30,78 @@ compressed_all_formatted_data <- compressed_data$compressed_all_formatted_data
 compressed_file_summary       <- compressed_data$compressed_file_summary
 
 ##### STEP 3: Calculate individual hood metrics, graph time series data
-compressed_hood_summary <- calc_plot_hood_metrics(compressed_data_files, compressed_all_formatted_data, compressed_file_summary, wd_output)
+compressed_hood_summary <- calculate_hood_metrics(compressed_data_files, compressed_all_formatted_data, 
+                                                  compressed_file_summary, wd_output)
     
 ##### STEP 4: Visualization of metrics for all fume hoods by treatment/ bldg/ lab
 data_summary_temp <- compressed_hood_summary
 wd_output_temp    <- wd_output
 source("./visualize_data_summary_by_dept.R")
 
-#### STEP 5: Sampling of fume hoods for analysis, visualization of sampled hoods
-groups <- unique(compressed_hood_summary$dept)
-sample_size <- 20   #number of hoods per group
-sampled_data_summary <- lapply(groups, FUN=function(g){
-    data_subset   <- compressed_hood_summary %>% filter(dept==g)
-    data_sample_g <- dplyr::sample_n(data_subset, size=sample_size, replace = TRUE)
-})
-sampled_data_summary <- dplyr::rbind_all(sampled_data_summary)
-
-data_summary_temp <- sampled_data_summary
-wd_output_temp    <- paste0(wd_output,"sampled_")
-source("./visualize_data_summary_by_dept.R")
-
-##### STEP 6: Analyse hood data for differences from week to week
-### try variations on the complete data set 
-#focus on single week/ timeframe
+##### STEP 5: Analyse hood data at the weekly level (and save results)
 weeks <- seq(from=as.POSIXct("2015-01-04"), to=Sys.time(), by=as.difftime(7, units="days"))
 weeks <- weeks[weeks< max(compressed_file_summary$max_date)]
 weeks <- weeks[weeks>=min(compressed_file_summary$min_date)]
 
-reduced_data_files     <- compressed_data_files
-reduced_hood_summary_w <- list()
+#summarize and plot every available hood-week combination 
+weekly_data_files     <- compressed_data_files
+weekly_hood_summary_w <- list()
 for(w in 1:(length(weeks)-1)){
     print(w)
-    reduced_formatted_data <- reduce_timeframe_hood_data(all_data_summary=compressed_file_summary, 
+    weekly_formatted_data <- reduce_timeframe_hood_data(all_data_summary=compressed_file_summary, 
                                                          all_formatted_data=compressed_all_formatted_data,
                                                          start=weeks[w], end=weeks[w+1])
-    reduced_file_summary <- calculate_file_metrics(all_formatted_data=reduced_formatted_data, data_files=reduced_data_files)
+    weekly_file_summary <- calculate_file_metrics(all_formatted_data=reduced_formatted_data, data_files=reduced_data_files)
     
-    reduced_hood_summary <- calc_plot_hood_metrics(reduced_data_files, reduced_formatted_data, reduced_file_summary, 
+    weekly_hood_summary <- calculate_hood_metrics(reduced_data_files, reduced_formatted_data, reduced_file_summary, 
                                                    wd_output=paste0(wd_output,"reduced",w,"_"))  
     
-    reduced_hood_summary_w[[length(reduced_hood_summary_w)+1]] <- data.frame(reduced_hood_summary, wk=w)
+    weekly_hood_summary_w[[length(weekly_hood_summary_w)+1]] <- data.frame(reduced_hood_summary, wk=w)
 }
-reduced_hood_summary <- dplyr::rbind_all(reduced_hood_summary_w)
+weekly_hood_summary <- dplyr::rbind_all(weekly_hood_summary_w)
+write.csv(weekly_hood_summary, paste0(wd_output,"weekly_hood_summary.csv"))
 
-shared_hoods <- reduced_hood_summary$hood
-shared_hoods <- names(table(shared_hoods)[table(shared_hoods)>3])
 
-analysis_data <- reduced_hood_summary_w_temp %>% filter(hood %in% shared_hoods)
-ggplot(analysis_data) + geom_line(aes(x=min_date,y=score, group=hood)) + ylim(0,50)
-group_summary <- summarize_groups(data=analysis_data, value="score", grouping_var="min_date")
+#### STEP 6: Sampling of fume hoods for analysis, visualization of sampled hoods
+groups <- unique(compressed_hood_summary$dept)
+sample_size <- 20   #number of hoods per group
+# sampled_data_summary <- lapply(groups, FUN=function(g){      #this step already done, don't resample
+#     data_subset   <- compressed_hood_summary %>% filter(dept==g)
+#     data_sample_g <- dplyr::sample_n(data_subset, size=sample_size, replace = TRUE)
+# })
+# sampled_data_summary <- dplyr::rbind_all(sampled_data_summary)
+# write.csv(sampled_data_summary[,c("hood", "dept")], paste0(wd_output,"sampled_data_summary.csv"), row.names=FALSE)
 
-analysis_data$min_date <- as.factor(analysis_data$min_date)
-fit <- aov(score ~ min_date, data=analysis_data)
-TukeyHSD(fit)
+#visualization for sampled data
+data_summary_temp <- sampled_data_summary
+wd_output_temp    <- paste0(wd_output,"sampled_")
+source("./visualize_data_summary_by_dept.R")
 
-gplots::plotmeans(pct_exceeding_5 ~ min_date, data=analysis_data, xlab="Week", main="Mean Plot with 95% CI")
+#get complete weekly data for sample hoods
+sampled_data_summary <- read.csv(paste0(wd_output,"sampled_data_summary.csv"))
+sampled_data_summary$sample <- 1:nrow(sampled_data_summary)
+sampled_data_analysis <- weekly_hood_summary %>% 
+  filter(hood %in% sampled_data_summary$hood) %>%
+  filter(days>6) %>%
+  select(-file)
+sampled_data_analysis<-dplyr::left_join(sampled_data_summary[,c("hood","sample")],sampled_data_analysis,by="hood")
 
+# for each fume hood, sample 1 complete week
+samples <- unique(sampled_data_analysis$sample)
+sample_data <- lapply(samples, FUN=function(s){
+  s_data <- sampled_data_analysis %>% filter(sample==s)
+  s_datarow <- dplyr::sample_n(s_data, size = 1)
+})
+sample_data <- dplyr::rbind_all(sample_data)
+write.csv(sample_data, paste0(wd_output,"sample_data.csv"))
+
+sample_data <- dplyr::left_join(sample_data, hood_mapping, by="hood")
+sample_data$new_lab_name <- sapply(sample_data$lab, FUN=function(n){lab_mapping$lab_name[which(lab_mapping$lab==n)]})
+
+cfm_rates <- sample_data %>% filter(max_v>1)
+fit <- lm(data=cfm_rates, mean_v~pct_open)
+new_data <-data.frame(pct_open=c(0.085, 0.2,0.475))
+predict(fit, new_data)
 
 ##### STEP 5: Analyse metrics for significant differences 
 
