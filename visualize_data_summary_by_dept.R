@@ -7,23 +7,12 @@ library(ggplot2)
 if(!exists("data_summary_temp")) stop("data_summary_temp required to create visualizations")
 if(!exists("wd_output_temp")) stop("wd_output required to create visualizations")
 
-#begin creating visuals here
-plot_lab_distribution <- function(plot_setup, var, data_summary_temp){
-    max_y <- unname(quantile(data_summary_temp[,var],0.99, na.rm=T))
-    plot_b <- plot_setup + geom_boxplot(aes(x=group, y= eval(parse(text=var)))) + 
-        geom_point(aes(x=group, y= eval(parse(text=var))), position="jitter", color="red") + 
-        ggtitle(paste("Boxplot of ",var)) + 
-        coord_cartesian(ylim=c(0, max_y)) + ylab("") +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    suppressWarnings(print(plot_b))
-}
-
 
 pdf(paste0(wd_output_temp,"explore_variation_within_depts.pdf"), width=8, height=4)
 
 plot_data_availability(data_summary_temp)
 
-# visualize hood counts
+#### barplot hood counts by dept, lab
 data_summary_temp$group <- paste(data_summary_temp$dept, data_summary_temp$lab)
 plot_setup <- ggplot(data_summary_temp) + theme_minimal()
 
@@ -34,11 +23,6 @@ suppressWarnings(print(plot_a))
 plot_a2 <- plot_setup + geom_bar(aes(y=..count.., x=dept)) + 
     ggtitle("Hood distribution across building") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 suppressWarnings(print(plot_a2))
-
-# plot_lab_distribution(plot_setup, var="pct_na", data_summary_temp)    
-# plot_lab_distribution(plot_setup, var="pct_open_under_5", data_summary_temp)
-# plot_lab_distribution(plot_setup, var="pct_open_over_5", data_summary_temp)
-# plot_lab_distribution(plot_setup, var="pct_exceeding_5", data_summary_temp)
 
 # visualize metrics by department
 plot_setup <- ggplot(data_summary_temp, aes(x=dept, fill=dept)) + theme_minimal()

@@ -6,15 +6,31 @@ Using this code to analyse and visualize fume hood data from csv files will requ
 
 1. Install R. RStudio is not required, but is highly recommended.
 2. Install several R packages, including:
-* plyr
-* dplyr
-* ggplot2
-* reshape2
+  * plyr
+  * dplyr
+  * ggplot2
+  * reshape2
 3. Setup file stucture to match the directory structure described below. It will need to contain:
 - this fume_hood_analysis repository containing .CSV and .R files
 - a data folder into which you'll put csv data files with your fume hood data
 - an output folder into which all PDF figures and csv output will be saved
 4. Open up and run the R script 'process_data.R' in either RStudio (recommended) or R. This script is the master script to perform the main fume hood data analysis. 
+
+###Running basic fume hood calcs
+
+Open and run R script 'process_data.R'. It goes through the following main sections:
+
+1. Reading and formatting all data. Files are read from the `data` directory and loaded into R.
+2. Summarize files and compress (combine fume hood data or different dates from multiple data files)
+3. Summarize hoods, save csv file with all metrics, save fume hood plots to pdf file
+4. Visualizations for hood data, saved to pdf file
+5. Analysis at a weekly level, summarize and save plots to pdf
+6. Sampling of fume hoods and weeks for analysis in paper
+7. Other analysis (testing, not used in paper)
+
+Output from 'process_data.R' includes the following:
+
+
 
 ###Directory structure
 
@@ -29,30 +45,3 @@ Using this code to analyse and visualize fume hood data from csv files will requ
 L  +-- output               (directory to save any graphs, output from calculations)
 ```
 
-###Functions
-
-####check_format
-`Description` Check data for indicators of formatting, returns format type
-
-`Example` `file_format <- check_format(original_data) `
-
-`Value` A character string describing data formatting.
-
-####format_long_data
-Description: Converts data into a standard wide format from a long format.
-
-Example: `formatted_data <- format_long_data(original_data)`
-
-Value: A data frame with a single column named `dttm` and an additional column with time series data for each fume hood included in the original data (wide format).
-
-####format_wide_data
-Description: Converts data into a standard wide format from any wide format. 
-
-The primary differences between the two wide formats is variation in types of separators and inclusion of metadata in original wide formats.
-
-Example: `formatted_data <- format_wide_data(original_data)`
-
-Value: A data frame with a single column named `dttm` and an additional column with time series data for each fume hood included in the original data (wide format).
-
-####plot_fume_hood
-Description: Plots time series of fume hood data
