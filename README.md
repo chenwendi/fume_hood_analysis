@@ -22,14 +22,19 @@ Open and run R script 'process_data.R'. It goes through the following main secti
 
 1. Reading and formatting all data. Files are read from the `data` directory and loaded into R.
 2. Summarize files and compress (combine fume hood data or different dates from multiple data files)
-3. Summarize hoods, save csv file with all metrics, save fume hood plots to pdf file
+3. Summarize hoods (using compressed data), save csv file with all metrics, save fume hood plots to pdf file
 4. Visualizations for hood data, saved to pdf file
 5. Analysis at a weekly level, summarize and save plots to pdf
 6. Sampling of fume hoods and weeks for analysis in paper
 7. Other analysis (testing, not used in paper)
 
-Output from 'process_data.R' includes the following:
+Output from 'process_data.R' are saved to the `output` folder and include the following :
 
+1. hood_summary.csv (created in step 3 above)
+2. fume_hood_time_series.pdf (created in step 3 above)
+3. explore_variation_within_depts.pdf (created in step 4 above)
+4. weekly_hood_summary.csv (created in step 5 above)
+5. sample_data.csv (created in step 6 above)
 
 
 ###Directory structure
