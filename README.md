@@ -11,9 +11,9 @@ Using this code to analyse and visualize fume hood data from csv files will requ
   * ggplot2
   * reshape2
 3. Setup file stucture to match the directory structure described below. It will need to contain:
-- this fume_hood_analysis repository containing .CSV and .R files
-- a data folder into which you'll put csv data files with your fume hood data
-- an output folder into which all PDF figures and csv output will be saved
+  - this fume_hood_analysis repository containing .CSV and .R files
+  - a data folder into which you'll put csv data files with your fume hood data
+  - an output folder into which all PDF figures and csv output will be saved
 4. Open up and run the R script 'process_data.R' in either RStudio (recommended) or R. This script is the master script to perform the main fume hood data analysis. 
 
 ###Running basic fume hood calcs
