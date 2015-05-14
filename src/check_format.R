@@ -1,5 +1,7 @@
 #function checks data for indicators of formatting, returns format type
 check_format <- function(original_data){
+  tryCatch({
+    
     key_row   <- c(which(grepl("^Key",original_data)))    
     time_row  <- c(which(grepl("^Time",original_data)))    
     date_row  <- c(which(grepl("Date|DATE",original_data)))    
@@ -16,4 +18,6 @@ check_format <- function(original_data){
     }else{
         return(list(type="format not found"))
     }
+  }, error = function(e) print(paste0("Error in check_format: ", e))
+  )#end tryCatch
 }

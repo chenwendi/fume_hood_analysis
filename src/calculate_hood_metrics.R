@@ -1,7 +1,11 @@
 #calculate metrics, plot hood data, and save to file
 calculate_hood_metrics <- function(data_files, all_formatted_data, file_summary, wd_output, plot_ts=TRUE){
-  if(!"data.frame" %in% class(file_summary)) stop("file_summary is invalid input")
-  if(nrow(file_summary)==0)                  stop("file_summary is empty")
+  #some basic checks
+  if(length(data_files)==0)         stop("data_files is empty")
+  if(length(all_formatted_data)==0) stop("all_formatted_data is empty")
+  if(!exists("wd_output"))          stop("wd_output is empty")
+  if(!is.data.frame(file_summary))  stop("file_summary is invalid input")
+  if(nrow(file_summary)==0)         stop("file_summary is empty")
   
   tryCatch({
     
@@ -65,6 +69,7 @@ calculate_hood_metrics <- function(data_files, all_formatted_data, file_summary,
           openings_over_8 <- 0
           openings_over_24 <- 0
           pct_exceeding_5 <- 0
+          pct_active <- 0
         }
         
         intervals <- diff(h_data$dttm[1:10])       #get interval after nas removed (remove any padded values)
@@ -103,13 +108,15 @@ calculate_hood_metrics <- function(data_files, all_formatted_data, file_summary,
           openings_over_8 <- 0
           openings_over_24 <- 0
           pct_exceeding_5 <- 0
+          pct_active <- 0
         }else{
           med_opening_hrs <- round(median(run_length$lengths[run_length$values=="open"], na.rm=T)*(as.numeric(interval)/60),2)
           max_opening_hrs <- round(max(run_length$lengths[run_length$values=="open"], na.rm=T)*(as.numeric(interval)/60),2)
           openings_over_5 <- round(sum(run_length$exceeds_5, na.rm=T))
           openings_over_8 <- round(sum(run_length$exceeds_8, na.rm=T))
           openings_over_24 <- round(sum(run_length$exceeds_24, na.rm=T))
-          pct_exceeding_5 <- round(sum(run_length$int_exceeding_5, na.rm=T)/total_intervals,3)
+          pct_exceeding_5  <- round(sum(run_length$int_exceeding_5, na.rm=T)/total_intervals,3)
+          pct_active      <- pct_open_under_5 + openings_over_5*(60/as.numeric(interval))*5/total_intervals
         }
         
         full_summary <- data.frame(hood=h, interval, pct_na, 
@@ -117,7 +124,8 @@ calculate_hood_metrics <- function(data_files, all_formatted_data, file_summary,
                                    min_v=min_v, median_v, mean_v, max_v, threshold,
                                    pct_open_over_5, pct_open_under_5, 
                                    total_openings, med_opening_hrs, max_opening_hrs, 
-                                   openings_over_5, openings_over_8, openings_over_24, pct_exceeding_5
+                                   openings_over_5, openings_over_8, openings_over_24, pct_exceeding_5,
+                                   pct_active
         )
         
         if(plot_ts & full_summary$pct_na!=1)

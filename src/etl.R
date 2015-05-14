@@ -1,6 +1,7 @@
 # extract, transform, and load data
 
 etl <- function(data_files){
+  if(length(data_files)==0) stop("Error: No data files found")
     all_formatted_data <- list()
     for(file in 1:length(data_files)){
         tryCatch({
