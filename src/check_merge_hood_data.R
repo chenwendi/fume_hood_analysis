@@ -37,6 +37,8 @@ check_merge_hood_data <- function(all_file_summary, all_formatted_data, data_fil
       print(f)
       matches <- strsplit(file_matches[[f]], split=", ")[[1]]
       
+      if(length(matches)==0) next 
+      
       f1 <- all_formatted_data[[which(data_files==matches[1])]]
       f2 <- all_formatted_data[[which(data_files==matches[2])]]
       
